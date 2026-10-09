@@ -1,583 +1,1063 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Cableado UTP</title>
+    <title>Aprende Cableado UTP 3D | T568A y T568B Fácil</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        normA: '#10b981', // Verde T568A
+                        normB: '#f97316', // Naranja T568B
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Three.js & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            /* slate-900 */
-            color: #f8fafc;
-            /* slate-50 */
+            background: #090d16;
+            color: #f1f5f9;
         }
 
-        /* Custom wire styles for striped cables */
-        .wire-wg {
+        /* Rayados de cables realistas en CSS */
+        .cable-wg {
             background: repeating-linear-gradient(45deg, #ffffff, #ffffff 6px, #10b981 6px, #10b981 12px);
         }
-
-        .wire-g {
+        .cable-g {
             background-color: #10b981;
         }
-
-        .wire-wo {
+        .cable-wo {
             background: repeating-linear-gradient(45deg, #ffffff, #ffffff 6px, #f97316 6px, #f97316 12px);
         }
-
-        .wire-o {
+        .cable-o {
             background-color: #f97316;
         }
-
-        .wire-wb {
+        .cable-wb {
             background: repeating-linear-gradient(45deg, #ffffff, #ffffff 6px, #3b82f6 6px, #3b82f6 12px);
         }
-
-        .wire-b {
+        .cable-b {
             background-color: #3b82f6;
         }
-
-        .wire-wbr {
-            background: repeating-linear-gradient(45deg, #ffffff, #ffffff 6px, #8B4513 6px, #8B4513 12px);
+        .cable-wbr {
+            background: repeating-linear-gradient(45deg, #ffffff, #ffffff 6px, #854d0e 6px, #854d0e 12px);
+        }
+        .cable-br {
+            background-color: #854d0e;
         }
 
-        .wire-br {
-            background-color: #8B4513;
+        /* 3D Canvas */
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            outline: none;
+            cursor: grab;
         }
-
-        /* Component animations */
-        .wire-anim {
-            transition: all 0.3s ease;
-        }
-
-        .wire-hover:hover {
-            transform: translateY(-4px) scale(1.02);
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .selected-wire {
-            border: 3px solid #eab308;
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
-        }
-
-        /* RJ45 Connector aesthetic */
-        .rj45-clip {
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-top: none;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-        }
-
-        /* Glassmorphism panel */
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        #canvas3d:active {
+            cursor: grabbing;
         }
     </style>
 </head>
 
 <body class="min-h-screen flex flex-col">
 
-    <header class="bg-slate-800 p-4 shadow-md border-b border-slate-700">
-        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1
-                    class="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                    Simulador UTP: T568A / T568B
-                </h1>
-                <p class="text-sm text-slate-400 mt-1">Aprende el orden y función de los pares trenzados</p>
+    <!-- Header Limpio y Amigable -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <!-- Título -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-network-wired text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white flex items-center gap-2">
+                        Simulador UTP 3D
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Fácil & Educativo</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Aprende a ordenar los colores del conector RJ-45 paso a paso</p>
+                </div>
             </div>
 
-            <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-700">
-                <button id="btnModeLearn"
-                    class="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold text-sm transition-colors">Modo
-                    Aprendizaje</button>
-                <button id="btnModePractice"
-                    class="px-4 py-2 rounded-md text-slate-400 hover:text-white font-semibold text-sm transition-colors">Modo
-                    Práctica</button>
+            <!-- Selector Principal: Aprender vs Practicar -->
+            <div class="flex items-center gap-2">
+                <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center">
+                    <button id="tabLearn" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow-md">
+                        <i class="fa-solid fa-book-open"></i> Modo Aprender
+                    </button>
+                    <button id="tabPractice" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-gamepad"></i> Modo Practicar
+                    </button>
+                </div>
+
+                <!-- Sonido -->
+                <button id="btnSound" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs flex items-center justify-center transition-colors" title="Sonido">
+                    <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow p-4 md:p-8 flex flex-col items-center justify-center">
-        <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Contenedor Principal -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-3 sm:p-5 flex flex-col gap-5">
 
-            <!-- Left Column: Controls & Information -->
-            <div class="lg:col-span-1 flex flex-col gap-6">
-                <!-- Standard Selector -->
-                <div class="glass-panel p-6 rounded-2xl shadow-xl">
-                    <h2 class="text-xl font-bold mb-4 text-slate-200">Selecciona el Estándar</h2>
-                    <div class="flex gap-2">
-                        <button id="btnStdA"
-                            class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition-colors ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-800">T568A</button>
-                        <button id="btnStdB"
-                            class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-colors text-slate-300">T568B</button>
+        <!-- ========================================== -->
+        <!-- SELECCIÓN CLARA DE VERSIÓN: T568A vs T568B -->
+        <!-- ========================================== -->
+        <section class="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 shadow-lg">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
+                <span class="text-xs uppercase font-mono font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-layer-group text-blue-400"></i> Selecciona la versión a estudiar:
+                </span>
+                <span id="normTag" class="text-xs font-bold font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Mostrando: Norma T568A
+                </span>
+            </div>
+
+            <!-- Botones Grandes de Elección -->
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Botón Norma A -->
+                <button id="btnSelectA" class="py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border-2 border-emerald-500 bg-emerald-950/40 text-emerald-200 shadow-md shadow-emerald-950/40">
+                    <span class="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] text-black font-black">A</span>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-white">Norma T568A</div>
+                        <div class="text-[11px] text-emerald-400 font-normal">Empieza con cable Verde</div>
                     </div>
-                    <p id="stdDescription" class="mt-4 text-sm text-slate-400 leading-relaxed">
-                        El estándar <strong class="text-emerald-400">T568A</strong> se usa comúnmente en instalaciones
-                        gubernamentales y residenciales antiguas. Si unes un A y un B, creas un cable cruzado.
+                </button>
+
+                <!-- Botón Norma B -->
+                <button id="btnSelectB" class="py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border border-slate-800 bg-slate-950/50 text-slate-400 hover:text-white hover:border-slate-700">
+                    <span class="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center text-[10px] text-black font-black">B</span>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-white">Norma T568B</div>
+                        <div class="text-[11px] text-orange-400 font-normal">Empieza con cable Naranja (Más común)</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Regla Mnemotécnica / Explicación Simple -->
+            <div class="mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-300">
+                <i class="fa-solid fa-lightbulb text-amber-400 text-sm mt-0.5"></i>
+                <div id="normExplanation">
+                    <strong class="text-emerald-400">Norma T568A:</strong> El par <strong>Verde</strong> va en los pines 1 y 2. El par <strong>Naranja</strong> va en los pines 3 y 6. El Azul y el Marrón nunca cambian de posición.
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VISOR 3D DEL CONECTOR RJ-45                -->
+        <!-- ========================================== -->
+        <section class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex flex-col relative min-h-[380px] sm:min-h-[440px]">
+            <!-- Controles superiores de la cámara -->
+            <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur p-1 rounded-xl border border-slate-800 text-xs">
+                <button id="btnCamTop" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1" title="Ver desde arriba">
+                    <i class="fa-solid fa-eye"></i> <span class="hidden sm:inline">Vista Superior</span>
+                </button>
+                <button id="btnCam3D" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1" title="Vista en perspectiva">
+                    <i class="fa-solid fa-cube"></i> <span class="hidden sm:inline">Perspectiva</span>
+                </button>
+                <button id="btnCamReset" class="p-1.5 w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center justify-center" title="Restablecer vista">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+
+            <!-- Indicador de ayuda al usuario -->
+            <div class="absolute bottom-3 left-3 z-20 pointer-events-none bg-slate-950/80 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-hand-pointer text-cyan-400"></i>
+                <span>Gira el conector con el ratón o toca un pin para inspeccionarlo</span>
+            </div>
+
+            <!-- Canvas 3D de Three.js -->
+            <canvas id="canvas3d" class="flex-grow w-full"></canvas>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- MODO 1: APRENDER (Secuencia de pines 1 al 8) -->
+        <!-- ========================================== -->
+        <section id="sectionLearn" class="flex flex-col gap-4">
+
+            <!-- Fila interactiva de los 8 Pines con colores claros -->
+            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-ol text-blue-400"></i> Orden de los 8 Pines (De izquierda a derecha)
+                    </h3>
+                    <span class="text-[11px] text-slate-500">Toca cualquier pin</span>
+                </div>
+
+                <!-- 8 Pines en fila horizontal -->
+                <div id="pinsListBar" class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    <!-- Generado por JS -->
+                </div>
+            </div>
+
+            <!-- Ficha explicativa del Pin Seleccionado (Simple y clara) -->
+            <div id="pinDetailCard" class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-md flex flex-col sm:flex-row items-center gap-4">
+                <div id="pinDetailSwatch" class="w-14 h-14 rounded-2xl border-2 border-white/20 shadow-lg flex-shrink-0 cable-wg flex items-center justify-center text-white font-mono font-bold text-lg">
+                    1
+                </div>
+                <div class="flex-grow text-center sm:text-left">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-1">
+                        <h4 id="pinDetailName" class="text-base font-bold text-white">Pin 1: Blanco / Verde</h4>
+                        <span id="pinDetailSignal" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 w-fit mx-auto sm:mx-0">
+                            Transmisión (TX+)
+                        </span>
+                    </div>
+                    <p id="pinDetailText" class="text-xs text-slate-300 leading-relaxed">
+                        Este pin se encarga de enviar datos positivos hacia el switch o router. Es fundamental para que el cable funcione.
                     </p>
                 </div>
+            </div>
 
-                <!-- Info Panel -->
-                <div id="infoPanel"
-                    class="glass-panel p-6 rounded-2xl shadow-xl flex-grow flex flex-col justify-center min-h-[200px]">
-                    <div id="infoDefault" class="text-center text-slate-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-50" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p>Haz clic en un pin del conector para ver su función.</p>
+            <!-- Cuadro comparativo rápido A vs B (Directo y al grano) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        A
                     </div>
-                    <div id="infoContent" class="hidden">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div id="infoPinColor" class="w-6 h-6 rounded-full border border-white/20"></div>
-                            <h3 id="infoTitle" class="text-xl font-bold text-white">Pin X</h3>
-                        </div>
-                        <p id="infoDesc" class="text-sm text-slate-300 leading-relaxed"></p>
+                    <div>
+                        <h5 class="text-xs font-bold text-white">¿Cuándo se usa la Norma A?</h5>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Muy utilizada en cableados de edificios gubernamentales o residenciales antiguos. Si pones la norma A en un extremo y la B en el otro, creas un <strong>cable cruzado</strong> (PC a PC directo).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        B
+                    </div>
+                    <div>
+                        <h5 class="text-xs font-bold text-white">¿Cuándo se usa la Norma B?</h5>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Es la más usada en todo el mundo en la actualidad para cables de red normales (<strong>cables directos</strong>). Conecta una PC a un Switch, Router o toma de pared.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: RJ45 Connector & Wire Pool -->
-            <div class="lg:col-span-2 flex flex-col items-center gap-8">
+        </section>
 
-                <!-- RJ45 Visual Area -->
-                <div class="relative mt-8">
-                    <h3 class="text-center mb-6 text-lg font-semibold text-slate-300 uppercase tracking-widest">Conector
-                        RJ45 (Vista superior)</h3>
+        <!-- ========================================== -->
+        <!-- MODO 2: PRACTICAR (Juego interactivo fácil) -->
+        <!-- ========================================== -->
+        <section id="sectionPractice" class="hidden flex flex-col gap-4">
 
-                    <div
-                        class="glass-panel rounded-t-2xl rounded-b-md p-4 w-full max-w-[500px] border-4 border-slate-600/50 relative shadow-2xl bg-gradient-to-b from-slate-800 to-slate-900/80">
-                        <!-- Pins 1 to 8 -->
-                        <div class="flex justify-between items-end gap-1 h-48 md:h-64" id="rj45Slots">
-                            <!-- Slots generated by JS -->
-                        </div>
-                        <!-- Clip decorative -->
-                        <div class="rj45-clip"></div>
-                    </div>
-
-                    <!-- Practice actions -->
-                    <div id="practiceActions" class="hidden mt-8 flex justify-center gap-4">
-                        <button id="btnVerify"
-                            class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition-transform transform hover:scale-105 shadow-lg shadow-indigo-500/30">
-                            Verificar Conexión
-                        </button>
-                        <button id="btnReset"
-                            class="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-colors">
-                            Reiniciar
-                        </button>
-                    </div>
+            <!-- Instrucción y Estado del Reto -->
+            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-puzzle-piece text-amber-400"></i> Reto: Arma la <span id="practiceTargetName" class="text-emerald-400">Norma T568A</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Toma los cables sueltos de abajo y colócalos en el orden correcto del Pin 1 al Pin 8.</p>
                 </div>
-
-                <!-- Wire Pool (Visible in Practice Mode) -->
-                <div id="wirePoolContainer" class="hidden w-full max-w-[500px]">
-                    <h3 class="text-center mb-4 text-sm font-semibold text-slate-400">Cables Disponibles (Toca para
-                        seleccionar)</h3>
-                    <div class="glass-panel p-4 rounded-xl flex justify-center gap-3 flex-wrap min-h-[100px]"
-                        id="wirePool">
-                        <!-- Wires generated by JS -->
-                    </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnPracticeReset" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> Reiniciar
+                    </button>
+                    <button id="btnPracticeCheck" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Comprobar
+                    </button>
                 </div>
-
             </div>
-        </div>
+
+            <!-- Las 8 Ranuras donde se colocan los cables -->
+            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800">
+                <div class="flex justify-between items-center text-xs text-slate-400 mb-2 font-mono">
+                    <span>RANURAS DEL CONECTOR (Pines 1 al 8):</span>
+                    <span id="practicePlacedCounter" class="text-amber-400 font-bold">0 de 8 colocados</span>
+                </div>
+                <div id="practiceSlotsGrid" class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    <!-- Generado por JS -->
+                </div>
+            </div>
+
+            <!-- Depósito de Cables Disponibles -->
+            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800">
+                <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+                    <span class="font-mono">CABLES DISPONIBLES:</span>
+                    <span id="practiceSelectedPrompt" class="text-cyan-400 text-[11px] font-semibold">Toca un cable para tomarlo</span>
+                </div>
+                <div id="practicePoolGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 min-h-[70px] items-center">
+                    <!-- Generado por JS -->
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
-    <!-- Message Modal (No alerts) -->
-    <div id="msgModal"
-        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-600 rounded-2xl p-6 max-w-sm w-full shadow-2xl transform scale-95 opacity-0 transition-all"
-            id="msgModalContent">
-            <h3 id="msgTitle" class="text-2xl font-bold mb-2 text-white">Resultado</h3>
-            <p id="msgBody" class="text-slate-300 mb-6">Mensaje</p>
-            <button id="msgBtnClose"
-                class="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-colors">Aceptar</button>
+    <!-- Botón Flotante de Pantalla Completa (Inferior Izquierda) -->
+    <button id="btnFloatingFullscreen" class="fixed bottom-4 left-4 z-50 p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow-2xl backdrop-blur-md flex items-center gap-2 text-xs font-semibold transition-all transform hover:scale-105 active:scale-95 group" title="Modo Pantalla Completa">
+        <i id="fullscreenIcon" class="fa-solid fa-expand text-cyan-400 group-hover:rotate-12 transition-transform text-sm"></i>
+        <span class="hidden sm:inline font-mono">Pantalla Completa</span>
+    </button>
+
+    <!-- Modal Simple de Retroalimentación de Práctica -->
+    <div id="modalAlert" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 max-w-sm w-full rounded-2xl p-5 shadow-2xl text-center">
+            <div id="modalIcon" class="w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl mb-3 bg-emerald-500/20 text-emerald-400">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modalTitle" class="text-xl font-bold text-white mb-2">¡Perfecto!</h3>
+            <p id="modalMsg" class="text-xs text-slate-300 mb-5 leading-relaxed">
+                Has colocado los 8 cables en el orden exacto.
+            </p>
+            <button id="modalBtnOk" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors">
+                Continuar
+            </button>
         </div>
     </div>
 
-    <!-- Botón Flotante Pantalla Completa -->
-    <button id="btnFullscreen"
-        title="Pantalla completa"
-        aria-label="Pantalla completa"
-        class="fixed bottom-6 right-6 z-40 p-3.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700/80 rounded-full shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <!-- Icono para entrar en pantalla completa -->
-        <svg id="iconEnterFullscreen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-        </svg>
-        <!-- Icono para salir de pantalla completa -->
-        <svg id="iconExitFullscreen" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 14h4v4m0-4l-5 5m17-5h-4v4m0-4l5 5M4 10h4V6m0 4L3 5m17 5h-4V6m0 4l5-5" />
-        </svg>
-    </button>
-
+    <!-- Script de la Aplicación -->
     <script>
-        // Data Structures
-        const wireData = {
-            'wg': { id: 'wg', name: 'Blanco/Verde', class: 'wire-wg' },
-            'g': { id: 'g', name: 'Verde', class: 'wire-g' },
-            'wo': { id: 'wo', name: 'Blanco/Naranja', class: 'wire-wo' },
-            'o': { id: 'o', name: 'Naranja', class: 'wire-o' },
-            'wb': { id: 'wb', name: 'Blanco/Azul', class: 'wire-wb' },
-            'b': { id: 'b', name: 'Azul', class: 'wire-b' },
-            'wbr': { id: 'wbr', name: 'Blanco/Marrón', class: 'wire-wbr' },
-            'br': { id: 'br', name: 'Marrón', class: 'wire-br' }
+        /* ============================================================
+           1. EFECTOS DE SONIDO SIMPLES (Web Audio API nativo)
+           ============================================================ */
+        class SimpleAudio {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+            playPop() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+            playSuccess() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    setTimeout(() => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.2);
+                    }, idx * 70);
+                });
+            }
+            playError() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+        }
+        const sfx = new SimpleAudio();
+
+        /* ============================================================
+           2. DATOS DE LOS CABLES Y NORMAS
+           ============================================================ */
+        const wires = {
+            'wg':  { id: 'wg',  name: 'Blanco / Verde',   css: 'cable-wg',  hex: 0x10b981, isStripe: true },
+            'g':   { id: 'g',   name: 'Verde',            css: 'cable-g',   hex: 0x10b981, isStripe: false },
+            'wo':  { id: 'wo',  name: 'Blanco / Naranja', css: 'cable-wo',  hex: 0xf97316, isStripe: true },
+            'o':   { id: 'o',   name: 'Naranja',          css: 'cable-o',   hex: 0xf97316, isStripe: false },
+            'wb':  { id: 'wb',  name: 'Blanco / Azul',    css: 'cable-wb',  hex: 0x3b82f6, isStripe: true },
+            'b':   { id: 'b',   name: 'Azul',             css: 'cable-b',   hex: 0x3b82f6, isStripe: false },
+            'wbr': { id: 'wbr', name: 'Blanco / Marrón',  css: 'cable-wbr', hex: 0x854d0e, isStripe: true },
+            'br':  { id: 'br',  name: 'Marrón',           css: 'cable-br',  hex: 0x854d0e, isStripe: false }
         };
 
-        const standardA = ['wg', 'g', 'wo', 'b', 'wb', 'o', 'wbr', 'br'];
-        const standardB = ['wo', 'o', 'wg', 'b', 'wb', 'g', 'wbr', 'br'];
+        // Secuencias de las 2 normas
+        const seqA = ['wg', 'g', 'wo', 'b', 'wb', 'o', 'wbr', 'br'];
+        const seqB = ['wo', 'o', 'wg', 'b', 'wb', 'g', 'wbr', 'br'];
 
-        const pinFunctions = [
-            { pin: 1, title: 'Pin 1: Transmisión (TX+)', desc: 'Envía datos de forma diferencial (polo positivo). En redes de 10/100 Mbps, este hilo es vital para enviar información al dispositivo destino. En redes Gigabit (1000 Mbps), este par opera de manera bidireccional simultánea (BI_DA+).' },
-            { pin: 2, title: 'Pin 2: Transmisión (TX-)', desc: 'Envía datos de forma diferencial (polo negativo). Al igual que el pin 1, es crítico para la transmisión de datos (TX) en 10/100. En redes Gigabit, funciona bidireccionalmente (BI_DA-).' },
-            { pin: 3, title: 'Pin 3: Recepción (RX+)', desc: 'Recibe datos de forma diferencial (polo positivo). En 10/100 Mbps, por aquí entran los datos provenientes del otro dispositivo. En Gigabit, opera bidireccionalmente (BI_DB+).' },
-            { pin: 4, title: 'Pin 4: Libre / PoE / Tel', desc: 'Sin uso para datos en redes Ethernet tradicionales de 10/100 Mbps. Históricamente usado para líneas telefónicas analógicas. Hoy se usa comúnmente para enviar energía (Power over Ethernet). En Gigabit transmite datos (BI_DC+).' },
-            { pin: 5, title: 'Pin 5: Libre / PoE / Tel', desc: 'Sin uso para datos en 10/100 Mbps. Parte del mismo par que el pin 4, usado para telefonía o PoE. En redes Gigabit, transmite y recibe datos (BI_DC-).' },
-            { pin: 6, title: 'Pin 6: Recepción (RX-)', desc: 'Recibe datos de forma diferencial (polo negativo). Compañero del pin 3 para completar el circuito de recepción (RX) en 10/100 Mbps. En Gigabit opera bidireccionalmente (BI_DB-).' },
-            { pin: 7, title: 'Pin 7: Libre / PoE', desc: 'Sin uso en 10/100 Mbps. Muy frecuentemente utilizado para Power over Ethernet (PoE) proporcionando tierra/retorno de energía. En Gigabit transmite datos (BI_DD+).' },
-            { pin: 8, title: 'Pin 8: Libre / PoE', desc: 'Sin uso en 10/100 Mbps. Compañero del pin 7 para PoE. En redes Gigabit (1000BASE-T) es necesario para alcanzar la velocidad máxima, operando bidireccionalmente (BI_DD-).' }
+        // Explicación sencilla de cada pin
+        const pinSignals = [
+            { role: 'Transmisión de datos (TX+)', desc: 'Envía información saliente. Esencial para conectar a la red.' },
+            { role: 'Transmisión de datos (TX-)', desc: 'Compañero del Pin 1 para enviar información sin interferencias.' },
+            { role: 'Recepción de datos (RX+)', desc: 'Recibe información entrante desde internet o la red local.' },
+            { role: 'Telefonía / Energía PoE', desc: 'Lleva energía eléctrica (PoE) para cámaras o puntos de acceso.' },
+            { role: 'Telefonía / Energía PoE', desc: 'Compañero del Pin 4 para alimentación eléctrica y redes Gigabit.' },
+            { role: 'Recepción de datos (RX-)', desc: 'Compañero del Pin 3 para recibir información limpia de ruido.' },
+            { role: 'Energía PoE / Gigabit', desc: 'Línea de retorno para PoE y velocidad Gigabit (1000 Mbps).' },
+            { role: 'Energía PoE / Gigabit', desc: 'Compañero del Pin 7 para completar la conexión Gigabit.' }
         ];
 
-        // State Variables
-        let currentMode = 'learn'; // 'learn' or 'practice'
-        let currentStandard = 'A'; // 'A' or 'B'
-        let slots = new Array(8).fill(null);
-        let pool = Object.keys(wireData);
-        let selectedWireId = null;
+        /* ============================================================
+           3. ESTADO GLOBAL DE LA APLICACIÓN
+           ============================================================ */
+        const state = {
+            mode: 'learn', // 'learn' | 'practice'
+            norm: 'A',     // 'A' | 'B'
+            selectedPin: 0,
+            practiceSlots: new Array(8).fill(null),
+            practicePool: Object.keys(wires),
+            selectedWireId: null
+        };
 
-        // DOM Elements
-        const rj45Container = document.getElementById('rj45Slots');
-        const wirePoolContainer = document.getElementById('wirePoolContainer');
-        const wirePool = document.getElementById('wirePool');
+        /* ============================================================
+           4. ESCENA 3D EN THREE.JS (Conector RJ-45)
+           ============================================================ */
+        class RJ45Viewer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.scene = new THREE.Scene();
+                this.group = new THREE.Group();
+                this.scene.add(this.group);
+                this.wireMeshes = [];
+                this.pinMeshes = [];
+                this.stripeTextures = {};
 
-        const btnModeLearn = document.getElementById('btnModeLearn');
-        const btnModePractice = document.getElementById('btnModePractice');
-        const btnStdA = document.getElementById('btnStdA');
-        const btnStdB = document.getElementById('btnStdB');
+                const w = this.canvas.clientWidth || 600;
+                const h = this.canvas.clientHeight || 400;
 
-        const stdDescription = document.getElementById('stdDescription');
-        const practiceActions = document.getElementById('practiceActions');
-        const btnVerify = document.getElementById('btnVerify');
-        const btnReset = document.getElementById('btnReset');
+                this.camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+                this.camera.position.set(0, 5, 8.5);
 
-        const infoDefault = document.getElementById('infoDefault');
-        const infoContent = document.getElementById('infoContent');
-        const infoPinColor = document.getElementById('infoPinColor');
-        const infoTitle = document.getElementById('infoTitle');
-        const infoDesc = document.getElementById('infoDesc');
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    antialias: true,
+                    alpha: true
+                });
+                this.renderer.setSize(w, h);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        const msgModal = document.getElementById('msgModal');
-        const msgModalContent = document.getElementById('msgModalContent');
-        const msgTitle = document.getElementById('msgTitle');
-        const msgBody = document.getElementById('msgBody');
-        const msgBtnClose = document.getElementById('msgBtnClose');
-        const btnFullscreen = document.getElementById('btnFullscreen');
-        const iconEnterFullscreen = document.getElementById('iconEnterFullscreen');
-        const iconExitFullscreen = document.getElementById('iconExitFullscreen');
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.08;
+                this.controls.maxDistance = 16;
+                this.controls.minDistance = 3;
+                this.controls.target.set(0, 0, 0);
+
+                this.setupLighting();
+                this.createTextures();
+                this.buildModel();
+
+                window.addEventListener('resize', () => this.resize());
+                this.animate = this.animate.bind(this);
+                requestAnimationFrame(this.animate);
+            }
+
+            setupLighting() {
+                const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+                this.scene.add(ambient);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                dirLight.position.set(5, 8, 7);
+                this.scene.add(dirLight);
+
+                const blueLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+                blueLight.position.set(-6, 3, -5);
+                this.scene.add(blueLight);
+            }
+
+            createTextures() {
+                const makeStripe = (colorHex) => {
+                    const c = document.createElement('canvas');
+                    c.width = 128;
+                    c.height = 32;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, c.width, c.height);
+                    ctx.fillStyle = colorHex;
+                    for (let x = -c.height; x < c.width + c.height; x += 32) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x + 16, 0);
+                        ctx.lineTo(x + 16 + c.height, c.height);
+                        ctx.lineTo(x + c.height, c.height);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    const tex = new THREE.CanvasTexture(c);
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(4, 1);
+                    return tex;
+                };
+
+                this.stripeTextures['wg'] = makeStripe('#10b981');
+                this.stripeTextures['wo'] = makeStripe('#f97316');
+                this.stripeTextures['wb'] = makeStripe('#3b82f6');
+                this.stripeTextures['wbr'] = makeStripe('#854d0e');
+            }
+
+            buildModel() {
+                // Plástico translúcido del RJ45
+                const plasticMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x94a3b8,
+                    metalness: 0.1,
+                    roughness: 0.15,
+                    transmission: 0.85,
+                    transparent: true,
+                    opacity: 0.65
+                });
+
+                // Cuerpo del plug
+                const body = new THREE.Mesh(new THREE.BoxGeometry(4.3, 1.9, 5.6), plasticMat);
+                body.position.set(0, 0, 0.3);
+                this.group.add(body);
+
+                // Pestaña de clip inferior
+                const clip = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.3, 3.2), plasticMat);
+                clip.position.set(0, -1.2, -0.3);
+                clip.rotation.x = -0.2;
+                this.group.add(clip);
+
+                // Chaqueta exterior del cable (PVC azul)
+                const jacketMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+                const jacket = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 3.8, 24), jacketMat);
+                jacket.rotation.x = Math.PI / 2;
+                jacket.position.set(0, -0.1, -4.0);
+                this.group.add(jacket);
+
+                // 8 Pines dorados
+                const goldMat = new THREE.MeshStandardMaterial({
+                    color: 0xffd700,
+                    metalness: 0.9,
+                    roughness: 0.2
+                });
+
+                const spacing = 0.44;
+                const startX = -((7 * spacing) / 2);
+
+                for (let i = 0; i < 8; i++) {
+                    const pinX = startX + i * spacing;
+                    const pin = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.35, 1.0), goldMat.clone());
+                    pin.position.set(pinX, 0.68, 3.3);
+                    this.group.add(pin);
+                    this.pinMeshes.push(pin);
+                }
+
+                // 8 Cables tubulares en 3D
+                for (let i = 0; i < 8; i++) {
+                    const targetX = startX + i * spacing;
+                    const startXWire = (i - 3.5) * 0.18;
+                    const curve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(startXWire, -0.1, -2.2),
+                        new THREE.Vector3(targetX, 0.2, 0.5),
+                        new THREE.Vector3(targetX, 0.3, 3.0)
+                    ]);
+                    const wire = new THREE.Mesh(
+                        new THREE.TubeGeometry(curve, 24, 0.11, 12, false),
+                        new THREE.MeshStandardMaterial({ roughness: 0.4 })
+                    );
+                    this.group.add(wire);
+                    this.wireMeshes.push(wire);
+                }
+
+                this.updateWires();
+            }
+
+            updateWires() {
+                const currentSeq = state.mode === 'learn'
+                    ? (state.norm === 'A' ? seqA : seqB)
+                    : state.practiceSlots;
+
+                for (let i = 0; i < 8; i++) {
+                    const wireId = currentSeq[i];
+                    const mesh = this.wireMeshes[i];
+                    if (!wireId) {
+                        mesh.visible = false;
+                    } else {
+                        mesh.visible = true;
+                        const wDef = wires[wireId];
+                        if (wDef.isStripe && this.stripeTextures[wireId]) {
+                            mesh.material.map = this.stripeTextures[wireId];
+                            mesh.material.color.setHex(0xffffff);
+                        } else {
+                            mesh.material.map = null;
+                            mesh.material.color.setHex(wDef.hex);
+                        }
+                        mesh.material.needsUpdate = true;
+                    }
+                }
+            }
+
+            highlightPin(idx) {
+                this.pinMeshes.forEach((mesh, i) => {
+                    if (i === idx) {
+                        mesh.material.emissive.setHex(0x00f2fe);
+                        mesh.material.emissiveIntensity = 0.9;
+                    } else {
+                        mesh.material.emissive.setHex(0x000000);
+                        mesh.material.emissiveIntensity = 0;
+                    }
+                });
+            }
+
+            setCam(view) {
+                if (view === 'top') {
+                    this.camera.position.set(0, 10, 0.2);
+                    this.controls.target.set(0, 0, 0);
+                } else {
+                    this.camera.position.set(0, 5, 8.5);
+                    this.controls.target.set(0, 0, 0);
+                }
+                this.controls.update();
+            }
+
+            resize() {
+                const w = this.canvas.clientWidth;
+                const h = this.canvas.clientHeight;
+                if (!w || !h) return;
+                this.camera.aspect = w / h;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(w, h);
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate);
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        /* ============================================================
+           5. CONTROLADOR DE LA INTERFAZ
+           ============================================================ */
+        let viewer = null;
+
+        // Elementos DOM
+        const el = {
+            tabLearn: document.getElementById('tabLearn'),
+            tabPractice: document.getElementById('tabPractice'),
+            sectionLearn: document.getElementById('sectionLearn'),
+            sectionPractice: document.getElementById('sectionPractice'),
+            btnSelectA: document.getElementById('btnSelectA'),
+            btnSelectB: document.getElementById('btnSelectB'),
+            normTag: document.getElementById('normTag'),
+            normExplanation: document.getElementById('normExplanation'),
+            pinsListBar: document.getElementById('pinsListBar'),
+            pinDetailSwatch: document.getElementById('pinDetailSwatch'),
+            pinDetailName: document.getElementById('pinDetailName'),
+            pinDetailSignal: document.getElementById('pinDetailSignal'),
+            pinDetailText: document.getElementById('pinDetailText'),
+            // Práctica
+            practiceTargetName: document.getElementById('practiceTargetName'),
+            practicePlacedCounter: document.getElementById('practicePlacedCounter'),
+            practiceSlotsGrid: document.getElementById('practiceSlotsGrid'),
+            practicePoolGrid: document.getElementById('practicePoolGrid'),
+            practiceSelectedPrompt: document.getElementById('practiceSelectedPrompt'),
+            btnPracticeReset: document.getElementById('btnPracticeReset'),
+            btnPracticeCheck: document.getElementById('btnPracticeCheck'),
+            // Cámara
+            btnCamTop: document.getElementById('btnCamTop'),
+            btnCam3D: document.getElementById('btnCam3D'),
+            btnCamReset: document.getElementById('btnCamReset'),
+            // Modal
+            modalAlert: document.getElementById('modalAlert'),
+            modalIcon: document.getElementById('modalIcon'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalMsg: document.getElementById('modalMsg'),
+            modalBtnOk: document.getElementById('modalBtnOk'),
+            btnSound: document.getElementById('btnSound'),
+            soundIcon: document.getElementById('soundIcon'),
+            btnFloatingFullscreen: document.getElementById('btnFloatingFullscreen'),
+            fullscreenIcon: document.getElementById('fullscreenIcon')
+        };
 
         function init() {
-            attachEventListeners();
-            applyState();
+            viewer = new RJ45Viewer('canvas3d');
+            setupEvents();
+            renderLearnMode();
+            renderPracticeMode();
+            updateNormView();
+            selectPin(0);
         }
 
-        function applyState() {
-            // Update Mode Tabs UI
-            if (currentMode === 'learn') {
-                btnModeLearn.className = "px-4 py-2 rounded-md bg-blue-600 text-white font-semibold text-sm transition-colors";
-                btnModePractice.className = "px-4 py-2 rounded-md text-slate-400 hover:text-white font-semibold text-sm transition-colors";
-                wirePoolContainer.classList.add('hidden');
-                practiceActions.classList.add('hidden');
-                fillLearnModeSlots();
-                clearInfo();
+        /* Actualiza la vista según la norma elegida (A o B) */
+        function updateNormView() {
+            if (state.norm === 'A') {
+                el.btnSelectA.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border-2 border-emerald-500 bg-emerald-950/40 text-emerald-200 shadow-md shadow-emerald-950/40";
+                el.btnSelectB.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border border-slate-800 bg-slate-950/50 text-slate-400 hover:text-white hover:border-slate-700";
+                el.normTag.innerText = "Mostrando: Norma T568A";
+                el.normTag.className = "text-xs font-bold font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                el.normExplanation.innerHTML = "<strong class='text-emerald-400'>Norma T568A:</strong> El par <strong>Verde</strong> va en los pines 1 y 2. El par <strong>Naranja</strong> va en los pines 3 y 6. El Azul y el Marrón nunca cambian.";
+                el.practiceTargetName.innerText = "Norma T568A";
+                el.practiceTargetName.className = "text-emerald-400";
             } else {
-                btnModeLearn.className = "px-4 py-2 rounded-md text-slate-400 hover:text-white font-semibold text-sm transition-colors";
-                btnModePractice.className = "px-4 py-2 rounded-md bg-blue-600 text-white font-semibold text-sm transition-colors";
-                wirePoolContainer.classList.remove('hidden');
-                practiceActions.classList.remove('hidden');
-                resetPractice();
-                clearInfo();
+                el.btnSelectA.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border border-slate-800 bg-slate-950/50 text-slate-400 hover:text-white hover:border-slate-700";
+                el.btnSelectB.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 border-2 border-orange-500 bg-orange-950/40 text-orange-200 shadow-md shadow-orange-950/40";
+                el.normTag.innerText = "Mostrando: Norma T568B";
+                el.normTag.className = "text-xs font-bold font-mono px-2.5 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30";
+                el.normExplanation.innerHTML = "<strong class='text-orange-400'>Norma T568B (Comercial):</strong> El par <strong>Naranja</strong> va en los pines 1 y 2. El par <strong>Verde</strong> va en los pines 3 y 6. El Azul y el Marrón se quedan igual.";
+                el.practiceTargetName.innerText = "Norma T568B";
+                el.practiceTargetName.className = "text-orange-400";
             }
 
-            // Update Standard Tabs UI
-            if (currentStandard === 'A') {
-                btnStdA.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition-colors ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-800 text-white";
-                btnStdB.className = "flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-colors text-slate-300";
-                stdDescription.innerHTML = "El estándar <strong class='text-emerald-400'>T568A</strong> es obligatorio en contratos federales de EE.UU y muy común en Canadá y cableados residenciales antiguos. Si pones un A en un extremo y un B en el otro, formas un cable cruzado.";
-            } else {
-                btnStdA.className = "flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-colors text-slate-300";
-                btnStdB.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition-colors ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-800 text-white";
-                stdDescription.innerHTML = "El estándar <strong class='text-emerald-400'>T568B</strong> es el más utilizado comercialmente en el mundo para cables directos (patch cords) en redes locales.";
-            }
+            viewer.updateWires();
+            renderLearnMode();
+            selectPin(state.selectedPin);
         }
 
-        function renderRJ45() {
-            rj45Container.innerHTML = '';
-            for (let i = 0; i < 8; i++) {
-                const slotDiv = document.createElement('div');
-                slotDiv.className = `flex-1 h-full rounded-t-sm flex flex-col items-center justify-end border border-slate-700 bg-slate-900/50 relative group ${currentMode === 'learn' || (currentMode === 'practice' && !slots[i]) ? 'cursor-pointer' : 'cursor-pointer'}`;
+        /* Render de la barra de 8 pines en Modo Aprender */
+        function renderLearnMode() {
+            el.pinsListBar.innerHTML = '';
+            const seq = state.norm === 'A' ? seqA : seqB;
 
-                // Pin number at bottom
-                const pinNum = document.createElement('div');
-                pinNum.className = 'text-[10px] text-slate-500 font-bold mb-1 z-10 bg-slate-900 rounded px-1 group-hover:text-white transition-colors';
-                pinNum.innerText = i + 1;
+            seq.forEach((wireId, idx) => {
+                const w = wires[wireId];
+                const btn = document.createElement('button');
+                const isSelected = state.selectedPin === idx;
 
-                // Wire inside slot
-                if (slots[i]) {
-                    const wireInfo = wireData[slots[i]];
-                    const wireDiv = document.createElement('div');
-                    wireDiv.className = `absolute bottom-0 w-full h-[90%] rounded-t-md opacity-90 wire-anim group-hover:opacity-100 ${wireInfo.class}`;
-                    slotDiv.appendChild(wireDiv);
-                } else if (currentMode === 'practice' && selectedWireId) {
-                    // Hover effect for empty slot when wire selected
-                    slotDiv.classList.add('hover:bg-slate-700');
-                }
+                btn.className = `p-2 rounded-xl flex flex-col items-center gap-1.5 transition-all border ${
+                    isSelected ? 'border-cyan-400 ring-2 ring-cyan-400/50 bg-slate-800 scale-105' : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                }`;
 
-                slotDiv.onclick = () => handleSlotClick(i);
-                slotDiv.appendChild(pinNum);
-                rj45Container.appendChild(slotDiv);
-            }
-        }
+                // Muestra de color
+                const swatch = document.createElement('div');
+                swatch.className = `w-full h-8 rounded-lg border border-white/20 ${w.css}`;
+                btn.appendChild(swatch);
 
-        function renderPool() {
-            wirePool.innerHTML = '';
-            pool.forEach(wireId => {
-                const wireInfo = wireData[wireId];
-                const btn = document.createElement('div');
+                // Número y Nombre
+                const num = document.createElement('span');
+                num.className = "text-[11px] font-mono font-bold text-slate-300";
+                num.innerText = `Pin ${idx + 1}`;
+                btn.appendChild(num);
 
-                let selectClass = wireId === selectedWireId ? 'selected-wire' : 'wire-hover';
+                btn.onclick = () => {
+                    sfx.playPop();
+                    selectPin(idx);
+                };
 
-                btn.className = `w-12 h-16 rounded-md border border-slate-600 shadow-md flex items-center justify-center wire-anim ${selectClass} ${wireInfo.class}`;
-                btn.title = wireInfo.name;
-                btn.onclick = () => selectWire(wireId);
-
-                wirePool.appendChild(btn);
+                el.pinsListBar.appendChild(btn);
             });
-
-            if (pool.length === 0) {
-                wirePool.innerHTML = '<span class="text-slate-500 italic flex items-center w-full justify-center">Todos los cables están en el conector</span>';
-            }
         }
 
-        function fillLearnModeSlots() {
-            slots = currentStandard === 'A' ? [...standardA] : [...standardB];
-            renderRJ45();
-        }
+        /* Muestra el detalle del pin seleccionado */
+        function selectPin(idx) {
+            state.selectedPin = idx;
+            const seq = state.norm === 'A' ? seqA : seqB;
+            const wireId = seq[idx];
+            const w = wires[wireId];
+            const sig = pinSignals[idx];
 
-        function resetPractice() {
-            slots = new Array(8).fill(null);
-            pool = Object.keys(wireData).sort(() => Math.random() - 0.5); // Shuffle pool
-            selectedWireId = null;
-            renderRJ45();
-            renderPool();
-        }
+            el.pinDetailSwatch.className = `w-14 h-14 rounded-2xl border-2 border-white/20 shadow-lg flex-shrink-0 ${w.css} flex items-center justify-center text-white font-mono font-bold text-lg`;
+            el.pinDetailSwatch.innerText = idx + 1;
+            el.pinDetailName.innerText = `Pin ${idx + 1}: ${w.name}`;
+            el.pinDetailSignal.innerText = sig.role;
+            el.pinDetailText.innerText = sig.desc;
 
-        function selectWire(wireId) {
-            if (currentMode !== 'practice') return;
-            if (selectedWireId === wireId) {
-                selectedWireId = null; // Deselect
-            } else {
-                selectedWireId = wireId;
-            }
-            renderPool();
-            renderRJ45(); // Re-render to show hover hints on slots
-        }
+            viewer.highlightPin(idx);
 
-        function handleSlotClick(index) {
-            if (currentMode === 'learn') {
-                showPinInfo(index);
-                highlightSlot(index);
-            } else if (currentMode === 'practice') {
-                if (slots[index]) {
-                    // Remove wire from slot back to pool
-                    pool.push(slots[index]);
-                    slots[index] = null;
-                    selectedWireId = null; // Clear selection on removal
-                    renderRJ45();
-                    renderPool();
-                } else if (selectedWireId) {
-                    // Place selected wire into slot
-                    slots[index] = selectedWireId;
-                    pool = pool.filter(id => id !== selectedWireId);
-                    selectedWireId = null;
-                    renderRJ45();
-                    renderPool();
-                }
-            }
-        }
-
-        function showPinInfo(index) {
-            const wireId = slots[index];
-            const info = pinFunctions[index];
-
-            infoDefault.classList.add('hidden');
-            infoContent.classList.remove('hidden');
-
-            infoTitle.innerText = info.title;
-            infoDesc.innerText = info.desc;
-
-            if (wireId) {
-                const wireColorClass = wireData[wireId].class;
-                infoPinColor.className = `w-6 h-6 rounded-full shadow-sm border border-white/20 ${wireColorClass}`;
-            }
-        }
-
-        function clearInfo() {
-            infoDefault.classList.remove('hidden');
-            infoContent.classList.add('hidden');
-            // Remove highlights
-            Array.from(rj45Container.children).forEach(el => el.classList.remove('ring-2', 'ring-blue-500', 'z-20'));
-        }
-
-        function highlightSlot(index) {
-            Array.from(rj45Container.children).forEach((el, i) => {
-                if (i === index) {
-                    el.classList.add('ring-2', 'ring-blue-500', 'z-20', 'transform', 'scale-105');
+            // Re-render ligero para actualizar clase activa en botones
+            Array.from(el.pinsListBar.children).forEach((b, i) => {
+                if (i === idx) {
+                    b.className = "p-2 rounded-xl flex flex-col items-center gap-1.5 transition-all border border-cyan-400 ring-2 ring-cyan-400/50 bg-slate-800 scale-105";
                 } else {
-                    el.classList.remove('ring-2', 'ring-blue-500', 'z-20', 'transform', 'scale-105');
+                    b.className = "p-2 rounded-xl flex flex-col items-center gap-1.5 transition-all border border-slate-800 bg-slate-950/60 hover:border-slate-700";
                 }
             });
         }
 
-        function verifyPractice() {
-            if (slots.includes(null)) {
-                showMessage("Incompleto", "Por favor, coloca los 8 cables en el conector antes de verificar.", "warning");
+        /* ============================================================
+           MECÁNICAS DEL MODO PRÁCTICA
+           ============================================================ */
+        function renderPracticeMode() {
+            // Render de las 8 ranuras
+            el.practiceSlotsGrid.innerHTML = '';
+            let placed = 0;
+
+            for (let i = 0; i < 8; i++) {
+                const wireId = state.practiceSlots[i];
+                if (wireId) placed++;
+
+                const slot = document.createElement('div');
+                slot.className = `h-20 rounded-xl border flex flex-col items-center justify-between p-2 cursor-pointer transition-all ${
+                    wireId ? 'border-cyan-500 bg-slate-800' : 'border-dashed border-slate-700 bg-slate-950 hover:border-slate-500'
+                }`;
+
+                const pinLbl = document.createElement('span');
+                pinLbl.className = "text-[10px] font-mono font-bold text-slate-400";
+                pinLbl.innerText = `Pin ${i + 1}`;
+                slot.appendChild(pinLbl);
+
+                if (wireId) {
+                    const w = wires[wireId];
+                    const wirePill = document.createElement('div');
+                    wirePill.className = `w-full flex-grow my-1 rounded border border-white/20 ${w.css}`;
+                    slot.appendChild(wirePill);
+
+                    const removeTxt = document.createElement('span');
+                    removeTxt.className = "text-[9px] text-red-400 font-mono";
+                    removeTxt.innerText = "Quitar";
+                    slot.appendChild(removeTxt);
+                } else {
+                    const emptyIcon = document.createElement('div');
+                    emptyIcon.className = "flex-grow flex items-center justify-center text-slate-700 text-xs";
+                    emptyIcon.innerHTML = '<i class="fa-solid fa-arrow-down"></i>';
+                    slot.appendChild(emptyIcon);
+
+                    const emptyTxt = document.createElement('span');
+                    emptyTxt.className = "text-[9px] text-slate-600 font-mono";
+                    emptyTxt.innerText = "Vacío";
+                    slot.appendChild(emptyTxt);
+                }
+
+                slot.onclick = () => handleSlotClick(i);
+                el.practiceSlotsGrid.appendChild(slot);
+            }
+
+            el.practicePlacedCounter.innerText = `${placed} de 8 colocados`;
+
+            // Render de los cables sueltos
+            el.practicePoolGrid.innerHTML = '';
+            state.practicePool.forEach(wireId => {
+                const w = wires[wireId];
+                const btn = document.createElement('button');
+                const isSelected = state.selectedWireId === wireId;
+
+                btn.className = `h-14 rounded-xl border p-1.5 flex flex-col items-center justify-center transition-all ${w.css} ${
+                    isSelected ? 'ring-4 ring-cyan-400 scale-105 border-white' : 'border-white/20 hover:scale-102'
+                }`;
+
+                const lbl = document.createElement('span');
+                lbl.className = "text-[9px] font-bold px-1 rounded bg-black/80 text-white font-mono";
+                lbl.innerText = w.name;
+                btn.appendChild(lbl);
+
+                btn.onclick = () => handleWireSelect(wireId);
+                el.practicePoolGrid.appendChild(btn);
+            });
+
+            if (state.practicePool.length === 0) {
+                el.practicePoolGrid.innerHTML = '<div class="col-span-full py-3 text-center text-xs text-slate-500 italic"><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i>Todos los cables fueron colocados</div>';
+            }
+
+            if (state.selectedWireId) {
+                el.practiceSelectedPrompt.innerText = `Tomaste: ${wires[state.selectedWireId].name} • Toca una ranura`;
+            } else {
+                el.practiceSelectedPrompt.innerText = "Toca un cable para tomarlo";
+            }
+        }
+
+        function handleWireSelect(wireId) {
+            sfx.playPop();
+            state.selectedWireId = state.selectedWireId === wireId ? null : wireId;
+            renderPracticeMode();
+        }
+
+        function handleSlotClick(slotIdx) {
+            const currentWire = state.practiceSlots[slotIdx];
+
+            if (currentWire) {
+                // Quitar de la ranura y devolver a la lista
+                sfx.playPop();
+                state.practicePool.push(currentWire);
+                state.practiceSlots[slotIdx] = null;
+                state.selectedWireId = null;
+                renderPracticeMode();
+                viewer.updateWires();
+            } else if (state.selectedWireId) {
+                // Colocar el cable tomado
+                sfx.playPop();
+                state.practiceSlots[slotIdx] = state.selectedWireId;
+                state.practicePool = state.practicePool.filter(id => id !== state.selectedWireId);
+                state.selectedWireId = null;
+                renderPracticeMode();
+                viewer.updateWires();
+            }
+        }
+
+        function checkPractice() {
+            if (state.practiceSlots.includes(null)) {
+                sfx.playError();
+                showAlert(false, "Faltan cables", "Por favor llena los 8 pines antes de comprobar tu cable.");
                 return;
             }
 
-            const correctArray = currentStandard === 'A' ? standardA : standardB;
-            let isCorrect = true;
+            const targetSeq = state.norm === 'A' ? seqA : seqB;
+            let ok = true;
             for (let i = 0; i < 8; i++) {
-                if (slots[i] !== correctArray[i]) {
-                    isCorrect = false;
+                if (state.practiceSlots[i] !== targetSeq[i]) {
+                    ok = false;
                     break;
                 }
             }
 
-            if (isCorrect) {
-                showMessage("¡Excelente!", `Has armado correctamente el cable estándar T568${currentStandard}. ¡Buen trabajo!`, "success");
+            if (ok) {
+                sfx.playSuccess();
+                if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+                showAlert(true, "¡Excelente Trabajo!", `Armaste la Norma T568${state.norm} a la perfección.`);
             } else {
-                showMessage("Incorrecto", "El orden de los cables no corresponde al estándar seleccionado. Revisa y vuelve a intentarlo.", "error");
+                sfx.playError();
+                showAlert(false, "Orden Incorrecto", `Revisa los colores. Recuerda que para la Norma ${state.norm} los pares deben estar en su posición exacta.`);
             }
         }
 
-        function showMessage(title, text, type) {
-            msgTitle.innerText = title;
-            msgBody.innerText = text;
+        function resetPractice() {
+            sfx.playPop();
+            state.practiceSlots = new Array(8).fill(null);
+            state.practicePool = Object.keys(wires).sort(() => Math.random() - 0.5);
+            state.selectedWireId = null;
+            renderPracticeMode();
+            viewer.updateWires();
+        }
 
-            if (type === 'success') {
-                msgTitle.className = "text-2xl font-bold mb-2 text-emerald-400";
-                msgBtnClose.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white transition-colors";
-            } else if (type === 'error') {
-                msgTitle.className = "text-2xl font-bold mb-2 text-red-400";
-                msgBtnClose.className = "w-full py-3 bg-red-600 hover:bg-red-500 rounded-xl font-bold text-white transition-colors";
+        function showAlert(isSuccess, title, msg) {
+            el.modalTitle.innerText = title;
+            el.modalMsg.innerText = msg;
+            if (isSuccess) {
+                el.modalIcon.className = "w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl mb-3 bg-emerald-500/20 text-emerald-400";
+                el.modalIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
             } else {
-                msgTitle.className = "text-2xl font-bold mb-2 text-yellow-400";
-                msgBtnClose.className = "w-full py-3 bg-yellow-600 hover:bg-yellow-500 rounded-xl font-bold text-white transition-colors";
+                el.modalIcon.className = "w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl mb-3 bg-red-500/20 text-red-400";
+                el.modalIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
             }
-
-            msgModal.classList.remove('hidden');
-            setTimeout(() => {
-                msgModalContent.classList.remove('scale-95', 'opacity-0');
-                msgModalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
+            el.modalAlert.classList.remove('hidden');
         }
 
-        function closeModal() {
-            msgModalContent.classList.remove('scale-100', 'opacity-100');
-            msgModalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                msgModal.classList.add('hidden');
-            }, 200);
-        }
+        /* ============================================================
+           6. EVENTOS Y LISTENERS
+           ============================================================ */
+        function setupEvents() {
+            // Cambio de modo (Aprender vs Practicar)
+            el.tabLearn.onclick = () => {
+                sfx.playPop();
+                state.mode = 'learn';
+                el.tabLearn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow-md";
+                el.tabPractice.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white";
+                el.sectionLearn.classList.remove('hidden');
+                el.sectionPractice.classList.add('hidden');
+                viewer.updateWires();
+            };
 
-        // Fullscreen Toggle logic
-        function toggleFullscreen() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                const root = document.documentElement;
-                if (root.requestFullscreen) {
-                    root.requestFullscreen();
-                } else if (root.webkitRequestFullscreen) {
-                    root.webkitRequestFullscreen();
-                } else if (root.msRequestFullscreen) {
-                    root.msRequestFullscreen();
+            el.tabPractice.onclick = () => {
+                sfx.playPop();
+                state.mode = 'practice';
+                el.tabLearn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white";
+                el.tabPractice.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow-md";
+                el.sectionLearn.classList.add('hidden');
+                el.sectionPractice.classList.remove('hidden');
+                resetPractice();
+            };
+
+            // Cambio de Norma (A vs B)
+            el.btnSelectA.onclick = () => {
+                sfx.playPop();
+                if (state.norm !== 'A') {
+                    state.norm = 'A';
+                    updateNormView();
+                    if (state.mode === 'practice') resetPractice();
                 }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
-        }
+            };
 
-        function updateFullscreenIcon() {
-            const isFullscreen = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-            if (iconEnterFullscreen && iconExitFullscreen && btnFullscreen) {
-                if (isFullscreen) {
-                    iconEnterFullscreen.classList.add('hidden');
-                    iconExitFullscreen.classList.remove('hidden');
-                    btnFullscreen.setAttribute('title', 'Salir de pantalla completa');
-                    btnFullscreen.setAttribute('aria-label', 'Salir de pantalla completa');
+            el.btnSelectB.onclick = () => {
+                sfx.playPop();
+                if (state.norm !== 'B') {
+                    state.norm = 'B';
+                    updateNormView();
+                    if (state.mode === 'practice') resetPractice();
+                }
+            };
+
+            // Controles de cámara
+            el.btnCamTop.onclick = () => { sfx.playPop(); viewer.setCam('top'); };
+            el.btnCam3D.onclick = () => { sfx.playPop(); viewer.setCam('3d'); };
+            el.btnCamReset.onclick = () => {
+                sfx.playPop();
+                viewer.setCam('3d');
+                viewer.group.rotation.set(0, 0, 0);
+            };
+
+            // Acciones de práctica
+            el.btnPracticeCheck.onclick = checkPractice;
+            el.btnPracticeReset.onclick = resetPractice;
+            el.modalBtnOk.onclick = () => {
+                sfx.playPop();
+                el.modalAlert.classList.add('hidden');
+            };
+
+            // Sonido
+            el.btnSound.onclick = () => {
+                sfx.enabled = !sfx.enabled;
+                if (sfx.enabled) {
+                    sfx.init();
+                    el.soundIcon.className = "fa-solid fa-volume-high";
+                    sfx.playPop();
                 } else {
-                    iconEnterFullscreen.classList.remove('hidden');
-                    iconExitFullscreen.classList.add('hidden');
-                    btnFullscreen.setAttribute('title', 'Pantalla completa');
-                    btnFullscreen.setAttribute('aria-label', 'Pantalla completa');
+                    el.soundIcon.className = "fa-solid fa-volume-xmark";
                 }
+            };
+
+            // Botón Flotante Pantalla Completa
+            if (el.btnFloatingFullscreen) {
+                el.btnFloatingFullscreen.onclick = () => {
+                    sfx.playPop();
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(err => {
+                            console.warn("Fullscreen request error:", err);
+                        });
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        }
+                    }
+                };
+
+                document.addEventListener('fullscreenchange', () => {
+                    if (document.fullscreenElement) {
+                        el.fullscreenIcon.className = "fa-solid fa-compress text-cyan-400 group-hover:rotate-12 transition-transform text-sm";
+                        el.btnFloatingFullscreen.setAttribute('title', 'Salir de Pantalla Completa');
+                    } else {
+                        el.fullscreenIcon.className = "fa-solid fa-expand text-cyan-400 group-hover:rotate-12 transition-transform text-sm";
+                        el.btnFloatingFullscreen.setAttribute('title', 'Modo Pantalla Completa');
+                    }
+                });
             }
         }
 
-        // Event Listeners setup
-        function attachEventListeners() {
-            btnModeLearn.addEventListener('click', () => {
-                if (currentMode !== 'learn') { currentMode = 'learn'; applyState(); }
-            });
-            btnModePractice.addEventListener('click', () => {
-                if (currentMode !== 'practice') { currentMode = 'practice'; applyState(); }
-            });
-
-            btnStdA.addEventListener('click', () => {
-                if (currentStandard !== 'A') { currentStandard = 'A'; applyState(); }
-            });
-            btnStdB.addEventListener('click', () => {
-                if (currentStandard !== 'B') { currentStandard = 'B'; applyState(); }
-            });
-
-            btnVerify.addEventListener('click', verifyPractice);
-            btnReset.addEventListener('click', resetPractice);
-            msgBtnClose.addEventListener('click', closeModal);
-
-            if (btnFullscreen) {
-                btnFullscreen.addEventListener('click', toggleFullscreen);
-            }
-            document.addEventListener('fullscreenchange', updateFullscreenIcon);
-            document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-        }
-
-        // Initialize App
         window.onload = init;
-
     </script>
 </body>
 
 </html>
-```
